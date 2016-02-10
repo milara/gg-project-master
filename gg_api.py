@@ -15,7 +15,7 @@ def get_awards(year):
     return awards
 
 def get_nominees(year):
-    '''Nominees is a list of dictionaries with the hard coded award
+    '''Nominees is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change
     the name of this function or what it returns.'''
     # Your code here
@@ -29,7 +29,7 @@ def get_winners(year):
     return winners
 
 def get_presenters(year):
-    '''Presenters is a list of dictionaries with the hard coded award
+    '''Presenters is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change the
     name of this function or what it returns.'''
     # Your code here
