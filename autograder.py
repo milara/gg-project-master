@@ -1,4 +1,4 @@
-'''Version 0.30'''
+'''Version 0.31'''
 import sys
 import json
 import difflib
@@ -156,6 +156,10 @@ def score_structured(year, answers, info_type):
     c_score = 0
     results = getattr(gg_api, 'get_%s' % info_type)(year)
 
+    if info_type == "nominees":
+        del answers['award_data']['cecil b. demille award']
+        del results['cecil b. demille award']
+
     for a in answers['award_data']:
         temp_spelling, translation = calc_translation(results[a], answers['award_data'][a][info_type])
         spelling_score += temp_spelling
@@ -193,7 +197,7 @@ def main(years, grading):
 
 if __name__ == '__main__':
     years = ['2013', '2015']
-    grading = ["hosts", "awards", "nominees", "presenters", "winners"]
+    grading = ["hosts", "awards", "nominees", "presenters", "winner"]
 
     if len(sys.argv) > 1:
         if '2013' in sys.argv:
