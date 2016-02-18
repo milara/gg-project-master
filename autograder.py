@@ -44,7 +44,7 @@ def text(result, answer):
     return textscore
 
 
-def spell_check(r, a, s, weight=1):
+def spell_check(r, a, s, scores, weight=1):
     change = weight*(1-(edit_distance(r, a)/float(max(len(r), len(a)))))
     if s in scores:
         # penalty for returning multiple of the same result when
@@ -121,6 +121,7 @@ def calc_translation(result, answer):
 
 
 def calc_score(result, answer):
+    result = set(result)
     intersection = result.intersection(answer)
     len_intersection = len(intersection)
     len_union = len(result.union(answer))
@@ -172,7 +173,8 @@ def score_unstructured(year, answers, info_type):
 
 
 def main(years, grading):
-    scores = {y: {g: 0 for g in grading} for y in years}
+    types = ['spelling', 'completeness']
+    scores = {y: {g: {t:0 for t in types} for g in grading} for y in years}
     for y in years:
         with open('gg%sanswers.json' % y, 'r') as f:
             answers = json.load(f)
