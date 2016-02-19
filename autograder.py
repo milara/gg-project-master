@@ -102,14 +102,14 @@ def calc_translation(result, answer):
 
                 if bestAnswer and score > 0.45:
                     translation[r] = toMovie[ha]
-                    scores[toMovie[ha]] = spell_check(r, ha, toMovie[ha], 0.5)
+                    scores[toMovie[ha]] = spell_check(r, ha, toMovie[ha], scores, 0.5)
 
                 flag = False
             elif (max_result[0] == r) or (score_by_results[r][answer_match] > score_by_answers[answer_match][max_result[0]]):
                 # if the top result matching that answer is our current result or
                 # if the current result's score is greater than the previous top result
                 translation[r] = answer_match
-                scores[answer_match] = spell_check(r, answer_match, answer_match)
+                scores[answer_match] = spell_check(r, answer_match, answer_match, scores)
 
                 flag = False
 
