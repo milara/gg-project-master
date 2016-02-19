@@ -1,4 +1,4 @@
-'''Version 0.31'''
+'''Version 0.4'''
 import sys
 import json
 import difflib
@@ -13,16 +13,14 @@ global toMovie
 toMovie = {'johann johannsson': 'the theory of everything', 'alexandre desplat': 'the imitation game', 'trent reznor and atticus ross': 'gone girl', 'antonio sanchez': 'birdman', 'hans zimmer': 'interstellar', 'glory': 'selma', 'big eyes': 'big eyes', 'mercy is': 'noah', 'opportunity': 'annie', 'yellow flicker beat': 'the hunger games: mockingjay - part 1', 'alejandro gonzalez inarritu': 'birdman', 'wes anderson': 'the grand budapest hotel', 'gillian flynn': 'gone girl', 'richard linklater': 'boyhood', 'graham moore': 'the imitation game'}
 
 
-def norm_text(textlist):
-    """Takes a list of text and returns a string of normalized text."""
-    textlist = [' '.join(line.lower().split()) for line in textlist]
-    textlist = ["".join([c for c in line if c.isalnum() or c.isspace()]) for line in textlist]
-    text = '\n'.join(textlist)
+def norm_text(textstring):
+    """Takes a string of text and returns a string of normalized text."""
+    textstring = "".join([c for c in textstring if c.isalnum() or c.isspace()])
 
-    return text
+    return textstring.split()
 
 
-def text(result, answer):
+def text(answer, result):
     """Accepts two normalized texts, as output by the norm_text function, and returns a score based on the match length relative to the longest text length."""
     len_result = len(result)
     len_answer = len(answer)
@@ -61,6 +59,7 @@ def calc_translation(result, answer):
 
     result = set(result)
     answer = set(answer)
+
     intersection = result.intersection(answer)
     translation = dict(zip(intersection, intersection))
     scores = dict(zip(intersection, [1]*len(intersection)))
@@ -69,12 +68,15 @@ def calc_translation(result, answer):
 
     # loop through results that didn't have a perfect match
     # and get a score for each of them.
-    for r in (result-intersection):
+    comp = list(result - intersection)
+
+    for r in comp:
         score_by_results[r] = Counter()
         for a in answer:
             if a not in score_by_answers:
                 score_by_answers[a] = Counter()
-            score_by_results[r][a] = text(norm_text([a]), norm_text([r]))
+
+            score_by_results[r][a] = text(norm_text(a), norm_text(r))
             score_by_answers[a][r] = score_by_results[r][a]
 
     for r in score_by_results:
@@ -95,7 +97,7 @@ def calc_translation(result, answer):
                 # Check if we have a case of returning the movie instead
                 # of the person, or vice versa.
                 for ha in toMovie:
-                    tempScore = text(norm_text([ha]), norm_text([r]))
+                    tempScore = text(norm_text(ha), norm_text(r))
                     if tempScore > score:
                         score = tempScore
                         bestAnswer = ha
@@ -117,7 +119,10 @@ def calc_translation(result, answer):
             if cnt == len(ranking):
                 flag = False
 
-    return sum(scores.values()), translation
+    if scores:
+        return sum(scores.values())/len(scores), translation
+    else:
+        return sum(scores.values()), translation
 
 
 def calc_score(result, answer):
@@ -157,15 +162,27 @@ def score_structured(year, answers, info_type):
     results = getattr(gg_api, 'get_%s' % info_type)(year)
 
     if info_type == "nominees":
+        tempans = answers['award_data']['cecil b. demille award']
         del answers['award_data']['cecil b. demille award']
+        tempres = results['cecil b. demille award']
         del results['cecil b. demille award']
 
+    answer_length = len(answers['award_data'])
+    result_length = len(results)
+
     for a in answers['award_data']:
-        temp_spelling, translation = calc_translation(results[a], answers['award_data'][a][info_type])
+        if info_type == 'winner':
+            temp_spelling, translation = calc_translation([results[a]], [answers['award_data'][a][info_type]])
+        else:
+            temp_spelling, translation = calc_translation(results[a], answers['award_data'][a][info_type])
         spelling_score += temp_spelling
         c_score += calc_score([translation[res] if res in translation else res for res in results[a]], answers['award_data'][a][info_type])
 
-    return spelling_score, c_score
+    if info_type == "nominees":
+        answers['award_data']['cecil b. demille award'] = tempans
+        results['cecil b. demille award'] = tempres
+
+    return spelling_score/result_length, c_score/answer_length
 
 
 def score_unstructured(year, answers, info_type):
@@ -178,6 +195,7 @@ def score_unstructured(year, answers, info_type):
 
 def main(years, grading):
     types = ['spelling', 'completeness']
+
     scores = {y: {g: {t:0 for t in types} for g in grading} for y in years}
     for y in years:
         with open('gg%sanswers.json' % y, 'r') as f:
