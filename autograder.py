@@ -1,4 +1,4 @@
-'''Version 0.4'''
+'''Version 0.41'''
 import sys
 import json
 import difflib
@@ -120,9 +120,9 @@ def calc_translation(result, answer):
                 flag = False
 
     if scores:
-        return sum(scores.values())/len(scores), translation
+        return sum(scores.values())/float(len(scores)), translation
     else:
-        return sum(scores.values()), translation
+        return 0, translation
 
 
 def calc_score(result, answer):
@@ -160,29 +160,28 @@ def score_structured(year, answers, info_type):
     spelling_score = 0
     c_score = 0
     results = getattr(gg_api, 'get_%s' % info_type)(year)
+    length = 26
 
     if info_type == "nominees":
         tempans = answers['award_data']['cecil b. demille award']
         del answers['award_data']['cecil b. demille award']
         tempres = results['cecil b. demille award']
         del results['cecil b. demille award']
-
-    answer_length = len(answers['award_data'])
-    result_length = len(results)
+        length = 25
 
     for a in answers['award_data']:
         if info_type == 'winner':
             temp_spelling, translation = calc_translation([results[a]], [answers['award_data'][a][info_type]])
         else:
             temp_spelling, translation = calc_translation(results[a], answers['award_data'][a][info_type])
+            c_score += calc_score([translation[res] if res in translation else res for res in results[a]], answers['award_data'][a][info_type])
         spelling_score += temp_spelling
-        c_score += calc_score([translation[res] if res in translation else res for res in results[a]], answers['award_data'][a][info_type])
 
     if info_type == "nominees":
         answers['award_data']['cecil b. demille award'] = tempans
         results['cecil b. demille award'] = tempres
 
-    return spelling_score/result_length, c_score/answer_length
+    return spelling_score/length, c_score/length
 
 
 def score_unstructured(year, answers, info_type):
@@ -203,14 +202,14 @@ def main(years, grading):
 
         answers['awards'] = answers['award_data'].keys()
 
-        for special in ['hosts', 'awards']:
-            if special in grading:
-                scores[y][special]['spelling'], scores[y][special]['completeness'] = score_unstructured(y, answers, special)
-                grading = grading[1:]
-
         for g in grading:
-            scores[y][g]['spelling'], scores[y][g]['completeness'] = score_structured(y, answers, g)
+            if g in ['hosts', 'awards']:
+                scores[y][g]['spelling'], scores[y][g]['completeness'] = score_unstructured(y, answers, g)
+            else:
+                scores[y][g]['spelling'], scores[y][g]['completeness'] = score_structured(y, answers, g)
 
+        if "winner" in grading:
+            del scores[y]['winner']['completeness']
     pprint(scores)
 
 if __name__ == '__main__':
