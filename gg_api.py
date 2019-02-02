@@ -41,7 +41,7 @@ def pre_ceremony():
     plain text file. It is the first thing the TA will run when grading.
     Do NOT change the name of this function or what it returns.'''
     # Your code here
-    print "Pre-ceremony processing complete."
+    print("Pre-ceremony processing complete.")
     return
 
 def main():
