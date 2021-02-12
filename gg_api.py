@@ -12,14 +12,20 @@ def loadTweet(filename):
     tweets = []
     for item in raw_json:
         tweets.append(item['text'])
-    return tweets[:1000]
+    return tweets[:]
+
+def clean_up_tweets(tweets):
+    alphabet = set('abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    cleaned = ''.join(filter(alphabet.__contains__, tweets))
+    return cleaned 
 
 def get_hosts(year):
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
     hosts = []
     tweets = loadTweet(year)
-    tweets_lowered = [x.lower() for x in tweets]
+    tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
+    #cleaned_tweets = clean_up_tweets(tweets_lowered)
     
     #for some reason this method was leaving out some tweets that should have been included
     #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
@@ -32,6 +38,37 @@ def get_hosts(year):
     hosts = hosts1 + hosts2 + hosts3
     
     return hosts
+
+def get_drama_awards(year):
+    drama = []
+    tweets = loadTweet(year)
+    tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
+    
+    #for some reason this method was leaving out some tweets that should have been included
+    #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
+    
+    #so for now I'll just concatonate which seems to return everything it should
+    drama1 = [ i for i in tweets_lowered if "drama" in i]
+    
+    drama = drama1
+    
+    return drama
+
+def get_comedy_or_musical_awards(year):
+    comedy_or_musical = []
+    tweets = loadTweet(year)
+    tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
+    
+    #for some reason this method was leaving out some tweets that should have been included
+    #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
+    
+    #so for now I'll just concatonate which seems to return everything it should
+    comedy_or_musical1 = [ i for i in tweets_lowered if "comedy or musical" in i]
+    
+    comedy_or_musical = comedy_or_musical1
+    
+    return comedy_or_musical
+
 
 def get_awards(year):
     '''Awards is a list of strings. Do NOT change the name
@@ -105,4 +142,4 @@ def main():
 #if __name__ == '__main__':
 #    main()
 
-get_hosts('gg2013.json')
+get_comedy_or_musical_awards('gg2013.json')
