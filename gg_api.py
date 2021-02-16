@@ -14,7 +14,7 @@ def loadTweet(filename):
     raw_json = json.load(file)
     tweets = []
     for item in raw_json:
-        tweets.append(clean_up_tweets(item['text']))
+        tweets.append(clean_up_tweets(item['text'].lower()))
     return tweets[:]
 
 def test_sample(tweets, n):
@@ -25,55 +25,71 @@ def clean_up_tweets(tweets):
     cleaned = ''.join(filter(alphabet.__contains__, tweets))
     return cleaned 
 
-def get_hosts(year):
+def remove_rts(tweets):
+    for i in tweets[:]:
+        if i.startswith('rt'):
+            tweets.remove(i)
+    return tweets
+
+#gets tweets related to hosting
+def get_relevant_host_tweets(year):
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
-    hosts = []
+
+    host_tweets = []
+
     tweets = tweetdict[year]
     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
-    #cleaned_tweets = clean_up_tweets(tweets_lowered)
     
-    #for some reason this method was leaving out some tweets that should have been included
-    #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
-    
-    #so for now I'll just concatonate which seems to return everything it should
     hosts1 = [ i for i in tweets_lowered if "host" in i ]
     hosts2 = [ i for i in tweets_lowered if "hosts" in i ]
     hosts3 = [ i for i in tweets_lowered if "hosting" in i ]
     
-    hosts = hosts1 + hosts2 + hosts3
+    host_tweets = hosts1 + hosts2 + hosts3
+    
+    return host_tweets
+
+def get_hosts(year):
+    '''Hosts is a list of one or more strings. Do NOT change the name
+    of this function or what it returns.'''
+    hosts = []
     
     return hosts
 
-def get_drama_awards(year):
+def get_relevant_award_tweets(year):
     drama = []
     tweets = tweetdict[year]
     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
     
-    #for some reason this method was leaving out some tweets that should have been included
-    #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
-    
-    #so for now I'll just concatonate which seems to return everything it should
-    drama1 = [ i for i in tweets_lowered if "drama" in i]
+    drama1 = [ i for i in tweets_lowered if "best" in i]
     
     drama = drama1
     
+    
+    
     return drama
 
-def get_comedy_or_musical_awards(year):
-    comedy_or_musical = []
-    tweets = tweetdict[year]
-    tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
+
+# def get_drama_awards(year):
+#     drama = []
+#     tweets = tweetdict[year]
+#     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
+#     drama1 = [ i for i in tweets_lowered if "drama" in i]
     
-    #for some reason this method was leaving out some tweets that should have been included
-    #hosts = [i for i in tweets if "hosting" in i or "hosts" in i or "host" in i]
+#     drama = drama1
     
-    #so for now I'll just concatonate which seems to return everything it should
-    comedy_or_musical1 = [ i for i in tweets_lowered if "comedy or musical" in i]
+#     return drama
+
+# def get_comedy_or_musical_awards(year):
+#     comedy_or_musical = []
+#     tweets = tweetdict[year]
+#     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
     
-    comedy_or_musical = comedy_or_musical1
+#     comedy_or_musical1 = [ i for i in tweets_lowered if "comedy or musical" in i]
     
-    return comedy_or_musical
+#     comedy_or_musical = comedy_or_musical1
+    
+#     return comedy_or_musical
 
 
 def get_awards(year):
@@ -156,8 +172,10 @@ def extract_entities(text):
 def make_tweet_dict():
     # Makes a dictionary of all tweets with the year as the key
     tweetdict = {}
-    tweetdict[2013] = loadTweet('../gg2013.json')
-    tweetdict[2015] = loadTweet('../gg2015.json')
+
+    tweetdict[2013] = loadTweet('gg2013.json')
+    tweetdict[2015] = loadTweet('gg2015.json')
+
     # smaller sample for testing
     tweetdict[2013] = test_sample(tweetdict[2013],2000)
     tweetdict[2015] = test_sample(tweetdict[2015],2000)
@@ -185,11 +203,12 @@ def main():
     # Your code here
     # Make a dictionary of all tweets
     pre_ceremony()
-    print(tweetdict[2013])
+    print(remove_rts(tweetdict[2013]))
+
 
     
 
 #if __name__ == '__main__':
 #    main()
 main()
-#get_comedy_or_musical_awards('../gg2013.json')
+
