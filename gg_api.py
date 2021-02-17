@@ -25,10 +25,6 @@ def clean_up_tweets(tweets):
     cleaned = ''.join(filter(alphabet.__contains__, tweets))
     return cleaned 
 
-# def remove_rts(tweets):
-#     newlist = [i for i in tweets if not i.startswith('rt')]
-#     return newlist
-
 def remove_rts(tweets):
     for i in tweets[:]:
         if i.startswith('rt'):
@@ -39,7 +35,9 @@ def remove_rts(tweets):
 def get_relevant_host_tweets(year):
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
+
     host_tweets = []
+
     tweets = tweetdict[year]
     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
     
@@ -81,11 +79,11 @@ def get_relevant_award_tweets(year):
     
     return drama
 
+
 # def get_drama_awards(year):
 #     drama = []
 #     tweets = tweetdict[year]
 #     tweets_lowered = [clean_up_tweets(x.lower()) for x in tweets]
-    
 #     drama1 = [ i for i in tweets_lowered if "drama" in i]
     
 #     drama = drama1
@@ -184,8 +182,10 @@ def extract_entities(text):
 def make_tweet_dict():
     # Makes a dictionary of all tweets with the year as the key
     tweetdict = {}
+
     tweetdict[2013] = loadTweet('gg2013.json')
     tweetdict[2015] = loadTweet('gg2015.json')
+
     # smaller sample for testing
     tweetdict[2013] = test_sample(tweetdict[2013],2000)
     tweetdict[2015] = test_sample(tweetdict[2015],2000)
@@ -215,12 +215,10 @@ def main():
     pre_ceremony()
     print(remove_rts(tweetdict[2013]))
 
+
     
 
 #if __name__ == '__main__':
 #    main()
 main()
-# pre_ceremony()
-# get_relevant_host_tweets(2013)
 
-#remove_rts(['rt fdafdsa', 'fdsafdsafdsa', 'rt fdsafd'])
