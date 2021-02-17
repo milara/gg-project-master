@@ -55,7 +55,17 @@ def get_hosts(year):
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
     hosts = []
-    
+    # Find tweets related to hosting
+    relevant_tweets = get_relevant_host_tweets(year)
+    tweets = tweetdict[relevant_tweets]
+    #list of potential hosts
+    candidates = []
+    # Iterate through tweets, detecting names for each one
+    for tweet in tweets:
+        if any(name in tweet for name in NAMES.lower()) in tweet.lower():
+            tokens = nltk.word_tokenize(tweet.lower())
+            idx = tokens.index(name)
+            hosts.append(tokens[idx])
     return hosts
 
 def get_relevant_award_tweets(year):
