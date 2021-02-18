@@ -16,6 +16,10 @@ OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - mu
 NAMES = nltk.corpus.names.words('male.txt') + nltk.corpus.names.words('female.txt')
 LOWERED_NAMES = [x.lower() for x in NAMES]
 
+stop_words = nltk.corpus.stopwords.words('english')
+stop_words.extend(['golden', 'globe', 'globes', 'goldenglobe', 'goldenglobes'])
+stop_words = set(stop_words)
+
 def loadTweet(filename):
     file = open(filename)
     raw_json = json.load(file)
@@ -56,6 +60,65 @@ def get_relevant_host_tweets(year):
     
     return host_tweets
 
+def get_awards(year):
+    '''Awards is a list of strings. Do NOT change the name
+    of this function or what it returns.'''
+    awards = []
+    return awards
+
+def get_nominees(year):
+    '''Nominees is a dictionary with the hard coded award
+    names as keys, and each entry a list of strings. Do NOT change
+    the name of this function or what it returns.'''
+    nominees = {}
+    # Your code here
+    return nominees
+
+def get_relevant_award_tweets(award, year):
+    relevant_tweets=[]
+    for t in tweetdict[year]:
+        if get_similarity(award, t)>0.4:
+            relevant_tweets.append(t)
+    return relevant_tweets
+
+def get_similarity(award, tweet):
+    tweet_tokens = nltk.word_tokenize(tweet)
+    award_tokens = nltk.word_tokenize(award)
+    count=0
+    for t in award_tokens:
+        if t in tweet_tokens:
+            count+=1
+    return count/len(award_tokens)
+
+def get_winner(year):
+    '''Winners is a dictionary with the hard coded award
+    names as keys, and each entry containing a single string.
+    Do NOT change the name of this function or what it returns.'''
+    winners = {}
+    if year < 2018:
+        awards = OFFICIAL_AWARDS_1315
+    else:
+        awards = OFFICIAL_AWARDS_1819
+    
+    for award in awards:
+        #find relevant tweets to each award
+        tweets=get_relevant_award_tweets(award, year)
+        #initialize dict
+        winners[award]=''
+        #initialize potential candidates list
+        candidates=[]
+        for tweet in tweets: 
+            if any('win' or 'wins' or 'goes to' or 'won' in tweet):
+                extracted = extract_entities(tweet)
+                for e in extracted:
+                    if ' ' in e:
+                        candidates.append(e)
+            
+        if candidates!=[]:
+            winners[award]=Counter(candidates).most_common(1)[0][0]
+            
+    return winners
+
 def get_hosts(year):
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
@@ -79,81 +142,6 @@ def get_hosts(year):
     hosts.append(Counter(candidates).most_common(2)[1][0])
     return hosts
 
-
-def get_awards(year):
-    '''Awards is a list of strings. Do NOT change the name
-    of this function or what it returns.'''
-    awards = []
-    
-    
-    
-    return awards
-
-def get_nominees(year):
-    '''Nominees is a dictionary with the hard coded award
-    names as keys, and each entry a list of strings. Do NOT change
-    the name of this function or what it returns.'''
-    nominees = {}
-    # Your code here
-    return nominees
-
-def get_relevant_award_tweets(award, year):
-    relevant_tweets=[]
-    for t in tweetdict[year]:
-        if get_similarity(award, t)>0.4:
-            candidates.append(t)
-    return relevant_tweets
-
-def get_similarity(award, tweet):
-    tweet_tokens = nltk.word_tokenize(tweet)
-    award_tokens = nltk.word_tokenize(award)
-    count=0
-    for t in award_tokens:
-        if t in tweet_tokens:
-            count+=1
-    return count/len(award_tokens)
-
-def get_winner(year):
-    '''Winners is a dictionary with the hard coded award
-    names as keys, and each entry containing a single string.
-    Do NOT change the name of this function or what it returns.'''
-    winners = {}
-    tweets = tweetdict[year]
-    if year < 2018:
-        awards = OFFICIAL_AWARDS_1315
-    else:
-        awards = OFFICIAL_AWARDS_1819
-    # Iterate through awards, picking a winner for each one
-    for award in awards:
-        # initialize dictionary
-        winners[award] = ''
-        # List of potential winners
-        candidates = []
-        for tweet in tweets:
-            # Find tweets that contain the award 
-            # (may need to rephrase award names for some)
-            if award in tweet.lower():
-                tokens = nltk.word_tokenize(tweet.lower())
-                # look for winning key words "wins" and "won" (more can be added)
-                if "wins" in tokens:
-                    idx = tokens.index("wins")
-                    for i in range(idx):
-                        candidate = ' '
-                        candidate = candidate.join(tokens[i:idx])
-                        candidates.append(candidate)
-                if "won" in tokens:
-                    idx = tokens.index("won")
-                    for i in range(idx):
-                        candidate = ' '
-                        candidate = candidate.join(tokens[i:idx])
-                        candidates.append(candidate)
-        if not candidates:
-            winners[award] = ''
-        else:
-            winners[award] = mode(candidates)
-
-    return winners
-
 def get_presenters(year):
     '''Presenters is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change the
@@ -169,7 +157,7 @@ def extract_entities(text):
     for c in chunks:
         if type(c) is not tuple:
             entity=' '.join(leaf[0] for leaf in c.leaves())
-            if entity!='GoldenGlobes':
+            if entity!='GoldenGlobes' and entity!='Golden' and entity!= 'Globes' and entity!='Golden Globe' and entity!='Golden Globes':
                 entities.append(entity)
             #entities.append(' '.join(leaf[0] for leaf in c.leaves()))
     return entities
@@ -180,8 +168,8 @@ def make_tweet_dict():
     tweetdict[2013] = loadTweet('gg2013.json')
     tweetdict[2015] = loadTweet('gg2015.json')
     # smaller sample for testing
-    #tweetdict[2013] = test_sample(tweetdict[2013],2000)
-    #tweetdict[2015] = test_sample(tweetdict[2015],2000)
+    tweetdict[2013] = test_sample(tweetdict[2013],2000)
+    tweetdict[2015] = test_sample(tweetdict[2015],2000)
     return tweetdict
 
 def pre_ceremony():
@@ -206,7 +194,7 @@ def main():
     # Your code here
     # Make a dictionary of all tweets
     pre_ceremony()
-    get_relevant_award_tweets(2013)
+    get_relevant_award_tweets(2013, )
 
     
 
@@ -216,7 +204,9 @@ def main():
 
 #print(NAMES)
 pre_ceremony()
-get_similarity('cecil b. demille award', tweetdict[2013][29])
+print(get_winner(2013))
+
+#nltk.word_tokenize('this is my tweet')
 
 #print(get_hosts(2013))
 #original = ['Congratulations to Seth Meyers is hosting the GoldenGlobes', 
