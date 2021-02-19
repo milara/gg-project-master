@@ -71,22 +71,49 @@ def get_nominees(year):
     names as keys, and each entry a list of strings. Do NOT change
     the name of this function or what it returns.'''
     nominees = {}
-    # Your code here
+    if year < 2018:
+        awards = OFFICIAL_AWARDS_1315
+    else:
+        awards = OFFICIAL_AWARDS_1819
+    
+    for award in awards:
+        #find relevant tweets to each award
+        tweets=get_relevant_award_tweets(award, year)
+        #initialize dict
+        nominees[award]=[]
+        #initialize potential candidates list
+        candidates=[]
+        for tweet in tweets: 
+            if any('nomination' or 'nominees' or 'nominee' or 'nominated' or 'congrats' or 'congratulations' in tweet):
+                extracted = extract_entities(tweet)
+                for e in extracted:
+                    if ' ' in e:
+                        candidates.append(e)
+            
+        if candidates:
+            listofnames=Counter(candidates).most_common(5)
+            i=0
+            while(i<5 and i<len(listofnames)):
+                nominees[award].append(listofnames[i][0])
+                i+=1
+                
     return nominees
 
 def get_relevant_award_tweets(award, year):
     relevant_tweets=[]
     for t in tweetdict[year]:
-        if get_similarity(award, t)>0.4:
+        if get_similarity(award, t)>0.6:
             relevant_tweets.append(t)
     return relevant_tweets
+
+ignore_words = ['by', 'of', 'performance', 'in', 'a', 'an', 'or', 'any']
 
 def get_similarity(award, tweet):
     tweet_tokens = nltk.word_tokenize(tweet)
     award_tokens = nltk.word_tokenize(award)
     count=0
     for t in award_tokens:
-        if t in tweet_tokens:
+        if t in tweet_tokens and t not in ignore_words:
             count+=1
     return count/len(award_tokens)
 
@@ -96,6 +123,7 @@ def get_winner(year):
     Do NOT change the name of this function or what it returns.'''
     winners = {}
     if year < 2018:
+        #edit these lists to make them more casual
         awards = OFFICIAL_AWARDS_1315
     else:
         awards = OFFICIAL_AWARDS_1819
@@ -107,14 +135,19 @@ def get_winner(year):
         winners[award]=''
         #initialize potential candidates list
         candidates=[]
-        for tweet in tweets: 
-            if any('win' or 'wins' or 'goes to' or 'won' in tweet):
+        for tweet in tweets:
+            #make this more fine grained, make it read front to back and back to front based on word
+            #if any('goes to' or 'won by' in tweet):
+
+
+            if any('win' or 'wins' or 'won' or 'awarded' in tweet):
                 extracted = extract_entities(tweet)
                 for e in extracted:
                     if ' ' in e:
                         candidates.append(e)
             
-        if candidates!=[]:
+            
+        if candidates:
             winners[award]=Counter(candidates).most_common(1)[0][0]
             
     return winners
@@ -157,7 +190,7 @@ def extract_entities(text):
     for c in chunks:
         if type(c) is not tuple:
             entity=' '.join(leaf[0] for leaf in c.leaves())
-            if entity!='GoldenGlobes' and entity!='Golden' and entity!= 'Globes' and entity!='Golden Globe' and entity!='Golden Globes':
+            if entity!='GoldenGlobes' and entity!='Golden' and entity!= 'Globes' and entity!='Golden Globe' and entity!='Golden Globes' and entity!='best' and entity!='actor' and entity!='movie':
                 entities.append(entity)
             #entities.append(' '.join(leaf[0] for leaf in c.leaves()))
     return entities
@@ -168,8 +201,8 @@ def make_tweet_dict():
     tweetdict[2013] = loadTweet('gg2013.json')
     tweetdict[2015] = loadTweet('gg2015.json')
     # smaller sample for testing
-    tweetdict[2013] = test_sample(tweetdict[2013],2000)
-    tweetdict[2015] = test_sample(tweetdict[2015],2000)
+    tweetdict[2013] = test_sample(tweetdict[2013],10000)
+    tweetdict[2015] = test_sample(tweetdict[2015],10000)
     return tweetdict
 
 def pre_ceremony():
@@ -178,6 +211,8 @@ def pre_ceremony():
     plain text file. It is the first thing the TA will run when grading.
     Do NOT change the name of this function or what it returns.'''
     # Your code here
+    # years = [2013, 2015]
+    # for year in years:
     global tweetdict 
     tweetdict = make_tweet_dict()
     # Filtering may need to be done here
@@ -193,8 +228,24 @@ def main():
     what it returns.'''
     # Your code here
     # Make a dictionary of all tweets
-    pre_ceremony()
-    get_relevant_award_tweets(2013, )
+    get_hosts(year)
+    get_awards(year)
+    get_nominees(year)
+    get_presenters(year)
+    get_winner(year)
+
+    # {
+    # "Host":
+
+    # }
+
+    # if year < 2018:
+    #     awards = OFFICIAL_AWARDS_1315
+    # else:
+    #     awards = OFFICIAL_AWARDS_1819
+
+    # for award in awards:
+
 
     
 
@@ -204,7 +255,7 @@ def main():
 
 #print(NAMES)
 pre_ceremony()
-print(get_winner(2013))
+main()
 
 #nltk.word_tokenize('this is my tweet')
 
