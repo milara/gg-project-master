@@ -7,9 +7,8 @@ from collections import Counter
 import itertools
 import operator
 
-
 # global variable for holding tweets, key: year, value: list of cleaned tweets
-global tweetdict#
+global tweetdict
 OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
 
@@ -38,8 +37,107 @@ def get_awards(year):
     print('getting awards')
     '''Awards is a list of strings. Do NOT change the name
     of this function or what it returns.'''
-    awards = OFFICIAL_AWARDS_1315
+    # search for common phrase 'best'
+    # find other common tokens
+    # concatenate and pray
+    awards = []
+    words = []
+    useless_words = ['goldenglobes', 'golden', 'globes', 'best', 'rt', 'the', 'for', 'in', 'a', 'http', 'to', 'or', 'wins','of','and','is', 'at', 'i','on']
+    tweets = [tweet for tweet in tweetdict if "best" in tweet]
+    for t in tweets:
+        tokens = nltk.word_tokenize(t)
+        tokens = [token for token in tokens if (token.isalpha() and token not in useless_words)]
+        words.extend(tokens)
+
+    commons = Counter(words).most_common(12)
+    for c in commons:
+        awards.append('best ' + c[0])
+    
     return awards
+
+def get_nominee_candidates(award):
+    #print(award)
+    winner_type = classify_award(award)
+    candidates = []
+    tweets = award_tweets[award]
+    if winner_type == 'person':
+        #print('finding person')
+        for t in tweets:
+            if any('nominat' or 'nominee' or 'was robbed' or 'should have won' in t):
+                tokens = nltk.word_tokenize(t)
+                names = [token for token in tokens if token in LOWERED_NAMES]
+                for n in names:
+                    i = tokens.index(n)
+                    if i+1 < len(tokens):
+                        candidates.append(tokens[i] + ' ' + tokens[i+1]) 
+    if winner_type == 'title':
+        for t in tweets:
+            tokens = nltk.word_tokenize(t)
+            if tokens[0] == 'rt':
+                tokens = tokens[4:]
+            # Backward Chaining (x was robbed, x is nominated, x should have won)
+            if 'robbed' in tokens:
+                i = tokens.index('robbed')
+                tokens = tokens[:i-1]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            if 'nominated' in tokens:
+                i = tokens.index('nominated')
+                tokens = tokens[:i-1]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            if 'should' in tokens:
+                i = tokens.index('should')
+                tokens = tokens[:i]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            # forward chaining (beats x, gone to x)
+            elif 'beats' in tokens:
+                i = tokens.index('beats')
+                tokens = tokens[i+1:]
+                if not tokens[0].isalpha():
+                    tokens = tokens[1:]
+                c = ''
+                for token in tokens:
+                    if token.isalpha():
+                        c += ' ' + token
+                    else:
+                        break
+                candidates.append(c)
+            elif 'gone' in tokens:
+                i = tokens.index('gone')
+                tokens = tokens[i+2:]
+                if not tokens[0].isalpha():
+                    tokens = tokens[1:]
+                c = ''
+                for token in tokens:
+                    if token.isalpha():
+                        c += ' ' + token
+                    else:
+                        break
+                candidates.append(c)
+    return candidates
 
 def get_nominees(year):
     print('getting nominees')
@@ -48,25 +146,17 @@ def get_nominees(year):
     names as keys, and each entry a list of strings. Do NOT change
     the name of this function or what it returns.'''
     nominees = {}
-    if year < '2018':
+    if str(year) < '2018':
         awards = OFFICIAL_AWARDS_1315
     else:
         awards = OFFICIAL_AWARDS_1819
     
     for award in awards:
-        #find relevant tweets to each award
-        tweets = award_tweets[award]
         #initialize dict
         nominees[award]=[]
         #initialize potential candidates list
         candidates=[]
-        for tweet in tweets: 
-            if any('nomination' or 'nominees' or 'nominee' or 'nominated' or 'congrats' or 'congratulations' in tweet):
-                extracted = extract_entities(tweet)
-                for e in extracted:
-                    if ' ' in e:
-                        candidates.append(e)
-            
+        candidates = get_nominee_candidates(award)
         if candidates:
             listofnames=Counter(candidates).most_common(5)
             i=0
@@ -158,11 +248,14 @@ def get_candidates(award):
     return candidates
 
 def gen_relevant_tweets():
+    print('generating')
     global award_tweets
     award_tweets = {}
     # MAKE THIS MODULAR LATER
     for award in OFFICIAL_AWARDS_1315:
+        #print(award)
         award_tweets[award] = get_relevant_award_tweets(award)
+    print('generated')
 
 def get_winner(year):
     print('getting winners')
@@ -190,7 +283,7 @@ def get_hosts(year):
     print('getting hosts')
     global tweetdict
     tweetdict = make_tweet_dict(year)
-    print(len(tweetdict))
+    #print(len(tweetdict))
     '''Hosts is a list of one or more strings. Do NOT change the name
     of this function or what it returns.'''
     hosts = []
@@ -216,14 +309,34 @@ def get_hosts(year):
     return hosts
 
 def get_presenters(year):
-    print('getting presenter')
+    #gen_relevant_tweets()
+    print('getting presenters')
     '''Presenters is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change the
     name of this function or what it returns.'''
     presenters = {}
-    for award in OFFICIAL_AWARDS_1315:
-        presenters[award] = 'your mom'
+    if year < '2018':
+        awards = OFFICIAL_AWARDS_1315
+    else:
+        awards = OFFICIAL_AWARDS_1819
+
+    for award in awards:
+        presenters[award] = ''
+        tweets = award_tweets[award]
+        tweets = [t for t in tweets if "present" in t]
+        #print(tweets) 
+        candidates = []
+        for tweet in tweets:
+            tokens = nltk.word_tokenize(tweet)
+            names = [token for token in tokens if token in LOWERED_NAMES]
+            for n in names:
+                i = tokens.index(n)
+                if i+1 < len(tokens):
+                    candidates.append(tokens[i] + ' ' + tokens[i+1])
+        if candidates:
+            presenters[award] = Counter(candidates).most_common(1)[0][0]
     # Your code here
+    print(presenters)
     return presenters
 
 def extract_entities(text):
@@ -240,14 +353,10 @@ def extract_entities(text):
 
 def make_tweet_dict(year):
     # Makes a dictionary of all tweets with the year as the key
-    print("making")
+    #print("making")
     tweets = loadTweet('gg' + str(year) + '.json')
-    """ if year == 2013:
-        tweetdict = loadTweet('gg2013.json')
-    if year == 2015:
-        tweetdict = loadTweet('gg2015.json') """
     # smaller sample for testing
-    tweets = random.sample(tweets, 10000)
+    #tweets = random.sample(tweets, 10000)
     return tweets
 
 import csv
@@ -281,7 +390,7 @@ def pre_ceremony():
     plain text file. It is the first thing the TA will run when grading.
     Do NOT change the name of this function or what it returns.'''
     # Your code here
-    
+    #gen_relevant_tweets()
     # Filtering may need to be done here
     #read_names(2013)
     #read_titles(2013)
@@ -296,19 +405,18 @@ def main():
     what it returns.'''
     # Your code here
     # Make a dictionary of all tweets
-    #global tweetdict
-    
-    #print(get_hosts(2013))
-    
-    #get_awards(year)
-    #get_nominees(year)
-    #get_presenters(year)
-    
-    #print(get_winner(2013))
-
-    #print(get_relevant_award_tweets(OFFICIAL_AWARDS_1315[2]))
-    #get_candidates(OFFICIAL_AWARDS_1315[2])
-
+    print("Results:")
+    print("Host or Hosts: ", ", ".join(hosts))
+    if year < '2018':
+        awards = human_readable_awards_1315
+    else:
+        awards = human_readable_awards_1819
+    for x in awards:
+        this_key=award.lower()
+        print("Award: ", x)
+        print("Presenters: ", ", ".join(presenters[this_key]))
+        print("Nominees: ", ", ".join(nominees[this_key]))
+        print("Winner: ", ", ".join(winners[this_key]))
 
 if __name__ == '__main__':
     pre_ceremony()
