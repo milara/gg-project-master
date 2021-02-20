@@ -16,6 +16,10 @@ OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - mu
 NAMES = nltk.corpus.names.words('male.txt') + nltk.corpus.names.words('female.txt')
 LOWERED_NAMES = [x.lower() for x in NAMES]
 
+human_readable_awards_1315 = ['Cecil B. Demille Award', 'Best Motion Picture - Drama', 'Best Performance By An Actress In A Motion Picture - Drama', 'Best Performance By An Actor In A Motion Picture - Drama', 'Best Motion Picture - Comedy Or Musical', 'Best Performance By An Actress In A Motion Picture - Comedy Or Musical', 'Best Performance By An Actor In A Motion Picture - Comedy Or Musical', 'Best Animated Feature Film', 'Best Foreign Language Film', 'Best Performance By An Actress In A Supporting Role In A Motion Picture', 'Best Performance By An Actor In A Supporting Role In A Motion Picture', 'Best Director - Motion Picture', 'Best Screenplay - Motion Picture', 'Best Original Score - Motion Picture', 'Best Original Song - Motion Picture', 'Best Television Series - Drama', 'Best Performance By An Actress In A Television Series - Drama', 'Best Performance By An Actor In A Television Series - Drama', 'Best Television Series - Comedy Or Musical', 'Best Performance By An Actress In A Television Series - Comedy Or Musical', 'Best Performance By An Actor In A Television Series - Comedy Or Musical', 'Best Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Supporting Role In A Series, Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Supporting Role In A Series, Mini-series Or Motion Picture Made For Television']
+human_readable_awards_1819 = ['Best Motion Picture - Drama', 'Best Motion Picture - Musical Or Comedy', 'Best Performance By An Actress In A Motion Picture - Drama', 'Best Performance By An Actor In A Motion Picture - Drama', 'Best Performance By An Actress In A Motion Picture - Musical Or Comedy', 'Best Performance By An Actor In A Motion Picture - Musical Or Comedy', 'Best Performance By An Actress In A Supporting Role In Any Motion Picture', 'Best Performance By An Actor In A Supporting Role In Any Motion Picture', 'Best Director - Motion Picture', 'Best Screenplay - Motion Picture', 'Best Motion Picture - Animated', 'Best Motion Picture - Foreign Language', 'Best Original Score - Motion Picture', 'Best Original Song - Motion Picture', 'Best Television Series - Drama', 'Best Television Series - Musical Or Comedy', 'Best Television Limited Series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Limited Series Or A Motion Picture Made For Television', 'Best Performance By An Actor In A Limited Series Or A Motion Picture Made For Television', 'Best Performance By An Actress In A Television Series - Drama', 'Best Performance By An Actor In A Television Series - Drama', 'Best Performance By An Actress In A Television Series - Musical Or Comedy', 'Best Performance By An Actor In A Television Series - Musical Or Comedy', 'Best Performance By An Actress In A Supporting Role In A Series, Limited Series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Supporting Role In A Series, Limited Series Or Motion Picture Made For Television', 'Cecil B. Demille Award']
+
+
 stop_words = nltk.corpus.stopwords.words('english')
 stop_words.extend(['golden', 'globe', 'globes', 'goldenglobe', 'goldenglobes'])
 stop_words = set(stop_words)
@@ -295,20 +299,20 @@ def main():
     run when grading. Do NOT change the name of this function or
     what it returns.'''
     # Your code here
-    # Make a dictionary of all tweets
-    #global tweetdict
-    
-    #print(get_hosts(2013))
-    
-    #get_awards(year)
-    #get_nominees(year)
-    #get_presenters(year)
-    
-    #print(get_winner(2013))
 
-    #print(get_relevant_award_tweets(OFFICIAL_AWARDS_1315[2]))
-    #get_candidates(OFFICIAL_AWARDS_1315[2])
-
+    
+    print("Results:")
+    print("Host or Hosts: ", ", ".join(hosts))
+    if year < '2018':
+        awards = human_readable_awards_1315
+    else:
+        awards = human_readable_awards_1819
+    for x in awards:
+        this_key=award.lower()
+        print("Award: ", x)
+        print("Presenters: ", ", ".join(presenters[this_key]))
+        print("Nominees: ", ", ".join(nominees[this_key]))
+        print("Winner: ", ", ".join(winners[this_key]))
 
 if __name__ == '__main__':
     pre_ceremony()
