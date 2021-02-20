@@ -8,12 +8,16 @@ import itertools
 import operator
 
 # global variable for holding tweets, key: year, value: list of cleaned tweets
-global tweetdict
+tweetdict = []
 OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
 
 NAMES = nltk.corpus.names.words('male.txt') + nltk.corpus.names.words('female.txt')
 LOWERED_NAMES = [x.lower() for x in NAMES]
+
+human_readable_awards_1315 = ['Cecil B. Demille Award', 'Best Motion Picture - Drama', 'Best Performance By An Actress In A Motion Picture - Drama', 'Best Performance By An Actor In A Motion Picture - Drama', 'Best Motion Picture - Comedy Or Musical', 'Best Performance By An Actress In A Motion Picture - Comedy Or Musical', 'Best Performance By An Actor In A Motion Picture - Comedy Or Musical', 'Best Animated Feature Film', 'Best Foreign Language Film', 'Best Performance By An Actress In A Supporting Role In A Motion Picture', 'Best Performance By An Actor In A Supporting Role In A Motion Picture', 'Best Director - Motion Picture', 'Best Screenplay - Motion Picture', 'Best Original Score - Motion Picture', 'Best Original Song - Motion Picture', 'Best Television Series - Drama', 'Best Performance By An Actress In A Television Series - Drama', 'Best Performance By An Actor In A Television Series - Drama', 'Best Television Series - Comedy Or Musical', 'Best Performance By An Actress In A Television Series - Comedy Or Musical', 'Best Performance By An Actor In A Television Series - Comedy Or Musical', 'Best Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Supporting Role In A Series, Mini-series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Supporting Role In A Series, Mini-series Or Motion Picture Made For Television']
+human_readable_awards_1819 = ['Best Motion Picture - Drama', 'Best Motion Picture - Musical Or Comedy', 'Best Performance By An Actress In A Motion Picture - Drama', 'Best Performance By An Actor In A Motion Picture - Drama', 'Best Performance By An Actress In A Motion Picture - Musical Or Comedy', 'Best Performance By An Actor In A Motion Picture - Musical Or Comedy', 'Best Performance By An Actress In A Supporting Role In Any Motion Picture', 'Best Performance By An Actor In A Supporting Role In Any Motion Picture', 'Best Director - Motion Picture', 'Best Screenplay - Motion Picture', 'Best Motion Picture - Animated', 'Best Motion Picture - Foreign Language', 'Best Original Score - Motion Picture', 'Best Original Song - Motion Picture', 'Best Television Series - Drama', 'Best Television Series - Musical Or Comedy', 'Best Television Limited Series Or Motion Picture Made For Television', 'Best Performance By An Actress In A Limited Series Or A Motion Picture Made For Television', 'Best Performance By An Actor In A Limited Series Or A Motion Picture Made For Television', 'Best Performance By An Actress In A Television Series - Drama', 'Best Performance By An Actor In A Television Series - Drama', 'Best Performance By An Actress In A Television Series - Musical Or Comedy', 'Best Performance By An Actor In A Television Series - Musical Or Comedy', 'Best Performance By An Actress In A Supporting Role In A Series, Limited Series Or Motion Picture Made For Television', 'Best Performance By An Actor In A Supporting Role In A Series, Limited Series Or Motion Picture Made For Television', 'Cecil B. Demille Award']
+
 
 stop_words = nltk.corpus.stopwords.words('english')
 stop_words.extend(['golden', 'globe', 'globes', 'goldenglobe', 'goldenglobes'])
@@ -141,6 +145,9 @@ def get_nominee_candidates(award):
 
 def get_nominees(year):
     print('getting nominees')
+    global tweetdict
+    if not tweetdict:
+        tweetdict = make_tweet_dict(year)
     gen_relevant_tweets()
     '''Nominees is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change
@@ -155,7 +162,6 @@ def get_nominees(year):
         #initialize dict
         nominees[award]=[]
         #initialize potential candidates list
-        candidates=[]
         candidates = get_nominee_candidates(award)
         if candidates:
             listofnames=Counter(candidates).most_common(5)
@@ -165,6 +171,90 @@ def get_nominees(year):
                 i+=1
                 
     return nominees
+
+def get_nominee_candidates(award):
+    #print(award)
+    winner_type = classify_award(award)
+    candidates = []
+    tweets = award_tweets[award]
+    if winner_type == 'person':
+        #print('finding person')
+        for t in tweets:
+            if any('nominat' or 'nominee' or 'was robbed' or 'should have won' in t):
+                tokens = nltk.word_tokenize(t)
+                names = [token for token in tokens if token in LOWERED_NAMES]
+                for n in names:
+                    i = tokens.index(n)
+                    if i+1 < len(tokens):
+                        candidates.append(tokens[i] + ' ' + tokens[i+1]) 
+    if winner_type == 'title':
+        for t in tweets:
+            tokens = nltk.word_tokenize(t)
+            if tokens[0] == 'rt':
+                tokens = tokens[4:]
+            # Backward Chaining (x was robbed, x is nominated, x should have won)
+            if 'robbed' in tokens:
+                i = tokens.index('robbed')
+                tokens = tokens[:i-1]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            if 'nominated' in tokens:
+                i = tokens.index('nominated')
+                tokens = tokens[:i-1]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            if 'should' in tokens:
+                i = tokens.index('should')
+                tokens = tokens[:i]
+                if not tokens[-1].isalpha():
+                    tokens = tokens[:-1]
+                c = ''
+                for token in tokens[::-1]:
+                    if token.isalpha():
+                        c = token + ' ' +c
+                    else:
+                        break
+                candidates.append(c)
+            # forward chaining (beats x, gone to x)
+            elif 'beats' in tokens:
+                i = tokens.index('beats')
+                tokens = tokens[i+1:]
+                if not tokens[0].isalpha():
+                    tokens = tokens[1:]
+                c = ''
+                for token in tokens:
+                    if token.isalpha():
+                        c += ' ' + token
+                    else:
+                        break
+                candidates.append(c)
+            elif 'gone' in tokens:
+                i = tokens.index('gone')
+                tokens = tokens[i+2:]
+                if not tokens[0].isalpha():
+                    tokens = tokens[1:]
+                c = ''
+                for token in tokens:
+                    if token.isalpha():
+                        c += ' ' + token
+                    else:
+                        break
+                candidates.append(c)
+    return candidates
 
 def get_relevant_award_tweets(award):
     relevant_tweets=[]
@@ -270,7 +360,6 @@ def get_winner(year):
         awards = OFFICIAL_AWARDS_1819
     
     for award in awards:
-        print(award)
         winners[award] = ''
         #find relevant tweets to each award
         candidates = get_candidates(award)
@@ -404,7 +493,6 @@ def main():
     run when grading. Do NOT change the name of this function or
     what it returns.'''
     # Your code here
-    # Make a dictionary of all tweets
     print("Results:")
     print("Host or Hosts: ", ", ".join(hosts))
     if year < '2018':
