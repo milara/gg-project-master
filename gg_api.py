@@ -78,7 +78,7 @@ def get_nominee_candidates(award):
     if winner_type == 'person':
         #print('finding person')
         for t in tweets:
-            if any('nomination' or 'nominees' or 'nominee' or 'nominated' or 'was robbed' or 'should have won' in t):
+            if any('nominat' or 'nominee' or 'was robbed' or 'should have won' in t):
                 tokens = nltk.word_tokenize(t)
                 names = [token for token in tokens if token in LOWERED_NAMES]
                 for n in names:
