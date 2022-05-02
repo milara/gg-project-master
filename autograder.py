@@ -10,7 +10,7 @@ from collections import Counter
 
 from nltk.metrics import edit_distance
 
-import gg_apifake
+import gg_api
 
 global toMovie
 toMovie = {'johann johannsson': 'the theory of everything', 'alexandre desplat': 'the imitation game', 'trent reznor and atticus ross': 'gone girl', 'antonio sanchez': 'birdman', 'hans zimmer': 'interstellar', 'glory': 'selma', 'big eyes': 'big eyes', 'mercy is': 'noah', 'opportunity': 'annie', 'yellow flicker beat': 'the hunger games mockingjay part 1', 'alejandro gonzalez inarritu': 'birdman', 'wes anderson': 'the grand budapest hotel', 'gillian flynn': 'gone girl', 'richard linklater': 'boyhood', 'graham moore': 'the imitation game'}
@@ -168,7 +168,7 @@ def score_structured(year, answers, info_type):
     # c_score is the completeness score
     spelling_score = 0
     c_score = 0
-    results = getattr(gg_apifake, 'get_%s' % info_type)(year)
+    results = getattr(gg_api, 'get_%s' % info_type)(year)
     length = 26
 
     if info_type == "nominees":
@@ -194,7 +194,7 @@ def score_structured(year, answers, info_type):
 
 
 def score_unstructured(year, answers, info_type):
-    results = getattr(gg_apifake, 'get_%s' % info_type)(year)
+    results = getattr(gg_api, 'get_%s' % info_type)(year)
     spelling_score, translation = calc_translation(results, answers[info_type])
     c_score = calc_score([translation[res] if res in translation else res for res in results], answers[info_type])
 
