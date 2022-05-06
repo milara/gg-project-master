@@ -25,7 +25,11 @@ def get_hosts(year):
         potential_names = host_name_pattern.findall(tweet)
         host_names.update(potential_names)
     
-    return host_names.most_common(2)
+    hosts = []
+    lstofhosts = host_names.most_common(2)
+    for n,f in lstofhosts:
+        hosts.append(n)
+    return hosts
 
 print('2013: ', get_hosts('2013'))
 print('2015: ', get_hosts('2015'))
