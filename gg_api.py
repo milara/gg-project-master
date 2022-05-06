@@ -1,7 +1,7 @@
-import re
 import json
-import math
-import nltk
+import re
+from collections import Counter
+
 from nltk.corpus import stopwords as sw
 from nltk.tokenize import wordpunct_tokenize
 from nltk.sentiment import SentimentIntensityAnalyzer
