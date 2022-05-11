@@ -37,7 +37,7 @@ def get_award(year):
         #########################new add######################
 
         if result:
-            substring = result.group(2).strip()
+            substring = result.group(2).strip().lower()
             #########################new add######################
             #substring = re.sub(r'[^\w\s]', '', substring)
             ##########################
@@ -92,13 +92,29 @@ def get_award(year):
         result = award_discussion_pattern2.search(tweet)
 
         if result:
-            substring = result.group(0).strip()
+            substring = result.group(0).strip().lower()
             words = nltk.word_tokenize(substring)
             words = substring.split()
-            if words[0] == "RT":
+            id = 0
+            for i in range(len(words)):
+                if words[i].lower() == "best":
+                    del words[:i]
+                    break
+            if words[0] == "rt":
                 del words[:2]
             substring = ' '.join(words)
+            if "goes to" in substring:
+                # words = substring.split()
+                # words = words[:-8]
+                # substring = ' '.join(words)
+                substring = substring[:-8]
+            elif "is awarded to" in substring:
+                # words = substring.split()
+                # words = words[:-14]
+                # substring = ' '.join(words)
+                substring = substring[:-14]
             print(substring)
+            award_tweets.append(substring)
 
 
             # if words and (words[0] == "for" or words[0] == "the"):
