@@ -1,6 +1,7 @@
 import json
 import re
 from collections import Counter
+import helpers.awards
 
 from nltk.corpus import stopwords as sw
 from nltk.tokenize import wordpunct_tokenize
@@ -48,28 +49,28 @@ def get_awards(year):
     '''Awards is a list of strings. Do NOT change the name
     of this function or what it returns.'''
     # Your code here
-    return awards
+    return helpers.awards.get_awards(year)
 
 def get_nominees(year):
     '''Nominees is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change
     the name of this function or what it returns.'''
     # Your code here
-    return nominees
+    return {}
 
 def get_winner(year):
     '''Winners is a dictionary with the hard coded award
     names as keys, and each entry containing a single string.
     Do NOT change the name of this function or what it returns.'''
     # Your code here
-    return winners
+    return {}
 
 def get_presenters(year):
     '''Presenters is a dictionary with the hard coded award
     names as keys, and each entry a list of strings. Do NOT change the
     name of this function or what it returns.'''
     # Your code here
-    return presenters
+    return {}
 
 def sentiment(year):
     sia = SentimentIntensityAnalyzer()

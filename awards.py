@@ -66,7 +66,6 @@ def get_award(year):
                         index = i
                         break
                 words = words[:index]
-            
             substring = ' '.join(words)
 
             # award_mention_tweets.remove(tweet)  
