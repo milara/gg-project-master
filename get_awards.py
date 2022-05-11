@@ -23,26 +23,136 @@ def get_award(year):
     award_mention_tweets = list(filter(award_best_pattern.search, get_tweets(year)))
 
     award_discussion_pattern = re.compile('(wins|won|is awarded)(.*)')
+    award_discussion_pattern1 = re.compile('(gets|got)(.*)')
     award_tweets = []
 
+
+    ##### structure: Name (wins) Award
     for tweet in award_mention_tweets:
         result = award_discussion_pattern.search(tweet)
+
+        #########################new add######################
+        if not result:
+            result = award_discussion_pattern1.search(tweet)
+        #########################new add######################
+
         if result:
             substring = result.group(2).strip()
-            break
+            #########################new add######################
+            #substring = re.sub(r'[^\w\s]', '', substring)
+            ##########################
             words = nltk.word_tokenize(substring)
-            # words = substring.split()
-            # print(words)
+            words = substring.split()
+            #print(words)
+            if words and (words[0] == "for" or words[0] == "the"):
+                words.pop(0)
+                for i in range(len(words)):
+                    # print(words[i])
+                    if words[i] != ',':
+                        substring = ' '.join(words[:i])
+                #         break
+
+            ################new add##########################
+            words = substring.split()
+            # print(substring)
+            if substring[3:].lower() != "best":
+                if words and (words[0] == "#GoldenGlobe" and words[1] == "for"):
+                    words = words[2:]
+                    substring = ' '.join(words)
+                    # for i in range(len(words)):
+                    #     substring = ' '.join(words[:i])
+                elif words and  len(words)>= 3 and (words[0] == "Golden" and words[1] == "Globe" and words[2] == "for"):
+                    words = words[3:]
+                    substring = ' '.join(words)
+                    # for i in range(len(words)):
+                    #     substring = ' '.join(words[:i])
+            index = 0
+            words = substring.split()
+            if "for" in words:
+                for i in range(len(words)):
+                    if words[i] == "for":
+                        index = i
+                        break
+                words = words[:index]
+            substring = ' '.join(words)
+            ####################new add##########################
+               
+            # print(substring)
+                    # break
+
+            ######################new add##########################
+            award_mention_tweets.remove(tweet)  
+            ####new add####
+                    
+            award_tweets.append(substring)
+    
+    award_discussion_pattern2 = re.compile('(.*)(goes to|is awarded to)')
+
+    for tweet in award_mention_tweets:
+        result = award_discussion_pattern2.search(tweet)
+
+        if result:
+            substring = result.group(0).strip()
+            words = nltk.word_tokenize(substring)
+            words = substring.split()
+            if words[0] == "RT":
+                del words[:2]
+            substring = ' '.join(words)
+            print(substring)
+
+
             # if words and (words[0] == "for" or words[0] == "the"):
             #     words.pop(0)
             #     for i in range(len(words)):
-            #         print(words[i])
+            #         # print(words[i])
             #         if words[i] != ',':
             #             substring = ' '.join(words[:i])
+                      #  # break
+
+            # ################new add##########################
+            # words = substring.split()
+            # # print(substring)
+            # if substring[3:].lower() != "best":
+            #     if words and (words[0] == "#GoldenGlobe" and words[1] == "for"):
+            #         words = words[2:]
+            #         substring = ' '.join(words)
+            #         # for i in range(len(words)):
+            #         #     substring = ' '.join(words[:i])
+            #     elif words and  len(words)>= 3 and (words[0] == "Golden" and words[1] == "Globe" and words[2] == "for"):
+            #         words = words[3:]
+            #         substring = ' '.join(words)
+            #         # for i in range(len(words)):
+            #         #     substring = ' '.join(words[:i])
+            # index = 0
+            # words = substring.split()
+            # if "for" in words:
+            #     for i in range(len(words)):
+            #         if words[i] == "for":
+            #             index = i
             #             break
-            #     break
-                        
+            #     words = words[:index]
+            # ####################new add##########################
+               
+            # #print(substring)
+            #         # break
+
+            # ######################new add##########################
+            # award_mention_tweets.remove(tweet)  
+            # ####new add####
+                    
             # award_tweets.append(substring)
+
+
+
+
+
+
+    
+    # print("original corpus length:", len(award_mention_tweets))
+    # print("award tweets length:", len(award_tweets))
+
+
+
 
     # print(award_tweets)
     
