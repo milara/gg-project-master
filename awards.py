@@ -2,6 +2,7 @@ import json
 import re
 from collections import Counter
 import nltk
+nltk.download('stopwords')
 
 def get_tweets(year):
     with open('gg{}.json'.format(year)) as f:

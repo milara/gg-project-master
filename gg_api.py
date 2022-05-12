@@ -50,7 +50,7 @@ def get_awards(year):
     '''Awards is a list of strings. Do NOT change the name
     of this function or what it returns.'''
     # Your code here
-    return awards.get_award(year)
+    return awards.get_award(year) 
 
 def get_nominees(year):
     '''Nominees is a dictionary with the hard coded award
