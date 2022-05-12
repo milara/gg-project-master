@@ -30,7 +30,7 @@ def get_nominees(year):
             if win in tweet:
                 first, middle, rest = tweet.partition(win)
                 print(first, "\n", middle, "\n", rest)
-                break
+                #break
                 
         #break
         #tokenized_match = nltk.tokenize.word_tokenize(middle.group(0))
@@ -44,7 +44,7 @@ def get_nominees(year):
         
         if not added_word:
             award_tweets.append(match.group(0)) """
-    return
+    
     award_names_dict = Counter()
     for tweet in award_tweets:
         splitted_word = tweet.split()
