@@ -6,7 +6,7 @@ from nltk.util import everygrams
 import Levenshtein
 
 AWARD_STOP_WORDS = set(['by', 'an', 'in', 'a', 'performance', 'or', 'role', 'made', 'for', '-', ','])
-TWEET_STOP_WORDS = set(["the"])
+TWEET_STOP_WORDS = set(["the", "golden", "globes"])
 
 OFFICIAL_AWARDS = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 
@@ -21,7 +21,7 @@ def get_tweets(year):
                 # For "RT @Forever21: Oh, Adele", removes RT, @, Forever21, :
                 text_lst = text_lst[4:]
 
-            english_text_lst = [token for token in text_lst if token.isalpha()]
+            english_text_lst = [token for token in text_lst if token.isalpha() and token.lower() not in TWEET_STOP_WORDS]
             tweet_text_lst.append(' '.join(english_text_lst))
     
     return tweet_text_lst
@@ -76,7 +76,7 @@ def get_winner(year):
             # People award, needs two names
             if any(word in award for word in ["actor", "actress", "director", "demille"]):
                 for potential_award, people_name in people_names:
-                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS and token not in TWEET_STOP_WORDS])
+                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS])
                     # print("AWARD={}, POTENTIAL_AWARD={}, RATIO={}, PEOPlE_NAME={}".format(award, filtered_potential_award, Levenshtein.ratio(award, filtered_potential_award), people_name))
                     if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
                         for gram in people_name:
@@ -85,7 +85,7 @@ def get_winner(year):
                             potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
             else:
                 for potential_award, other_name in other_names:
-                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS and token not in TWEET_STOP_WORDS])
+                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS])
                     # print("AWARD={}, POTENTIAL_AWARD={}, RATIO={}".format(award, filtered_potential_award, Levenshtein.ratio(award, filtered_potential_award)))
                     if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
                         for gram in other_name:
