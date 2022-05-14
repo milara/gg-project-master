@@ -103,7 +103,8 @@ def get_sentiment(year):
     sentimentdictionary = hostsenti
     return sentimentdictionary
                 				
-print(get_sentiment(2013))
+get_sentiment(2013)
+get_sentiment(2015)
 
 # def detectlang(text):
 #     @Language.factory("language_detector")
