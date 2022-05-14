@@ -1,17 +1,17 @@
-from nltk.corpus import stopwords as sw
+# from nltk.corpus import stopwords as sw
 from nltk.tokenize import wordpunct_tokenize
-from nltk.sentiment import SentimentIntensityAnalyzer
-from nltk.stem import WordNetLemmatizer as lemma
+# from nltk.sentiment import SentimentIntensityAnalyzer
+# from nltk.stem import WordNetLemmatizer as lemma
 import json
 import re
 from collections import Counter
-from statistics import mean
+# from statistics import mean
 from textblob import TextBlob
 import pandas as pd
 # import helpers.tweet_preprocessing as tp
-import spacy
-from spacy_langdetect import LanguageDetector
-from spacy.language import Language
+# import spacy
+# from spacy_langdetect import LanguageDetector
+# from spacy.language import Language
 
 def get_tweets(year):
     f = open("tweets2013.txt", 'r')
@@ -103,8 +103,8 @@ def get_sentiment(year):
     sentimentdictionary = hostsenti
     return sentimentdictionary
                 				
-get_sentiment(2013)
-get_sentiment(2015)
+# get_sentiment(2013)
+# get_sentiment(2015)
 
 # def detectlang(text):
 #     @Language.factory("language_detector")
