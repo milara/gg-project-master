@@ -19,6 +19,7 @@ def get_tweets(year):
     if exists('processedtweets{}.txt'.format(year)):
         return open('processedtweets{}.txt'.format(year)).readlines()
 
+
     with open('./gg{}.json'.format(year)) as f:
         tweet_information = json.load(f)
 
