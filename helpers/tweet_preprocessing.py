@@ -18,7 +18,7 @@ def get_tweets(year):
     if exists('processedtweets{}.txt'.format(year)):
         return open('processedtweets{}.txt'.format(year)).readlines()
 
-    with open('gg{}.json'.format(year)) as f:
+    with open('../gg{}.json'.format(year)) as f:
         tweet_information = json.load(f)
 
         tweet_text_lst = []
@@ -98,6 +98,6 @@ def fixMentions(text):
     return text
 
 
-# UNCOMMENT ME FOR TESTING "python3 tweet_preprocessing.py > tweets2013.txt"
-# for line in get_tweets(2013):
-#     print(line)
+#UNCOMMENT ME FOR TESTING "python3 tweet_preprocessing.py > tweets2013.txt"
+for line in get_tweets(2013):
+     print(line)
