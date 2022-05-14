@@ -1,74 +1,110 @@
 import json
-import re
-import nltk
 from collections import Counter
-from difflib import SequenceMatcher
-# from nltk.corpus import stopwords
+from nltk import bigrams
+from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.util import everygrams
+import Levenshtein
 
-# stop_words = set(stopwords.words('english'))
+AWARD_STOP_WORDS = set(['by', 'an', 'in', 'a', 'performance', 'or', 'role', 'made', 'for', '-', ','])
+TWEET_STOP_WORDS = set(["the"])
 
-OFFICIAL_AWARDS_1315 = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
-OFFICIAL_AWARDS_1819 = ['best motion picture - drama', 'best motion picture - musical or comedy', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best performance by an actress in a motion picture - musical or comedy', 'best performance by an actor in a motion picture - musical or comedy', 'best performance by an actress in a supporting role in any motion picture', 'best performance by an actor in a supporting role in any motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best motion picture - animated', 'best motion picture - foreign language', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best television series - musical or comedy', 'best television limited series or motion picture made for television', 'best performance by an actress in a limited series or a motion picture made for television', 'best performance by an actor in a limited series or a motion picture made for television', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best performance by an actress in a television series - musical or comedy', 'best performance by an actor in a television series - musical or comedy', 'best performance by an actress in a supporting role in a series, limited series or motion picture made for television', 'best performance by an actor in a supporting role in a series, limited series or motion picture made for television', 'cecil b. demille award']
-
-def similiar(a,b):
-    if SequenceMatcher(None, a, b).ratio() >= 0.70:
-        return True
-    else:
-        return False
+OFFICIAL_AWARDS = ['cecil b. demille award', 'best motion picture - drama', 'best performance by an actress in a motion picture - drama', 'best performance by an actor in a motion picture - drama', 'best motion picture - comedy or musical', 'best performance by an actress in a motion picture - comedy or musical', 'best performance by an actor in a motion picture - comedy or musical', 'best animated feature film', 'best foreign language film', 'best performance by an actress in a supporting role in a motion picture', 'best performance by an actor in a supporting role in a motion picture', 'best director - motion picture', 'best screenplay - motion picture', 'best original score - motion picture', 'best original song - motion picture', 'best television series - drama', 'best performance by an actress in a television series - drama', 'best performance by an actor in a television series - drama', 'best television series - comedy or musical', 'best performance by an actress in a television series - comedy or musical', 'best performance by an actor in a television series - comedy or musical', 'best mini-series or motion picture made for television', 'best performance by an actress in a mini-series or motion picture made for television', 'best performance by an actor in a mini-series or motion picture made for television', 'best performance by an actress in a supporting role in a series, mini-series or motion picture made for television', 'best performance by an actor in a supporting role in a series, mini-series or motion picture made for television']
 
 # Returns all tweet text from year in lowercase without stop words
 def get_tweets(year):
-    with open('gg{}.json'.format(year)) as f:
+    tweet_text_lst = []
+    with open('gg{}.json'.format(year), encoding='utf-8') as f:
         tweet_information = json.load(f)
-
-        tweet_text_lst = []
         for tweet in tweet_information:
-            # lowered_text = tweet['text'].lower()
-            # text_lst = nltk.tokenize.word_tokenize(lowered_text)
-            # filtered_text_lst = [token for token in text_lst if token not in stop_words]
-            # tweet_text_lst.append(' '.join(filtered_text_lst))
-            tweet_text_lst.append(tweet['text'])
+            text_lst = word_tokenize(tweet["text"])
+            if text_lst[0].lower() == "rt":
+                # For "RT @Forever21: Oh, Adele", removes RT, @, Forever21, :
+                text_lst = text_lst[4:]
 
+            english_text_lst = [token for token in text_lst if token.isalpha()]
+            tweet_text_lst.append(' '.join(english_text_lst))
+    
     return tweet_text_lst
 
+# Returns dictionary mapping between KEY = clean name, VALUE = original name
+def get_filtered_awards(year):
+    clean_awards = {}
+    for award in OFFICIAL_AWARDS:
+        text_lst = word_tokenize(award)
+        filtered_text_lst = [token for token in text_lst if token not in AWARD_STOP_WORDS]
+        clean_awards[' '.join(filtered_text_lst)] = award
+        # clean_awards[frozenset(filtered_text_lst)] = award
+
+    return clean_awards
+
 def get_winner(year):
-    if year == '2013':
-        award_mappings = {}
-        with open('./2013categories.txt') as file:
-            lines = file.readlines()
-            for line in lines:
-                award_mappings[line] = None
+    award_mappings = get_filtered_awards(year)
+    clean_awards = award_mappings.keys()
     
-    all_tweets = get_tweets(year)
     potential_winners = {}
-    for award in award_mappings.keys():
-        potential_winners[award] = Counter()
+    for clean_award in clean_awards:
+        potential_winners[clean_award] = Counter()
 
-    won_pattern = re.compile('got|won|wins|is awarded')
-    tweets_containing_won = list(filter(won_pattern.search, get_tweets(year)))
-    
-    for tweet in tweets_containing_won:
-        splitted_tweet = won_pattern.split(tweet)
-        potential_winner = splitted_tweet[0]
-        potential_award = splitted_tweet[1]
+    all_tweets = get_tweets(year)
+    # all_tweets = ["John Doe wins the cecil b. demille award.", "Argo wins the best motion picture in drama. Jennifer Lawrence wins the best actress performance in a motion picture drama."]
+    for tweet in all_tweets:
+        sentences = sent_tokenize(tweet)
+        people_names = []
+        other_names = []
+        for sentence in sentences:
+            # print("NOW PARSING={}".format(sentence))
+            # Start until key word
+            won_index = sentence.find(' won ')
+            if won_index != -1:
+                tokens = word_tokenize(sentence[:won_index])
+                people_names.append([sentence[won_index+5:], list(bigrams(tokens))])
+                other_names.append([sentence[won_index+5:], list(everygrams(tokens, max_len=3))])
 
-        for award in award_mappings.keys():
-            if award in potential_award:   
-                splitted_potential_winner = potential_winner.split()             
-                # Backwards count from award
-                for i in range(len(potential_winner) - 1, 0, -1):
-                    temp = ' '.join(splitted_potential_winner[i+1:])
-                    potential_winners[award][temp] = potential_winners[award].get(temp, 0) + 1
+            
+            wins_index = sentence.find(' wins ')
+            if wins_index != -1:
+                tokens = word_tokenize(sentence[:wins_index])
+                people_names.append([sentence[wins_index+6:], list(bigrams(tokens))])
+                other_names.append([sentence[wins_index+6:], list(everygrams(tokens, max_len=3))])
+            
+            # print("PEOPLE NAMES: ", people_names)
+            # print("OTHER NAMES: ", other_names)
+            
+            # Start after key word
 
-                # Forwards count to award
-                for i in range(len(splitted_potential_winner)):
-                    temp = ' '.join(splitted_potential_winner[:i+1])
-                    potential_winners[award][temp] = potential_winners[award].get(temp, 0) + 1
+        for award in clean_awards:
+            # People award, needs two names
+            if any(word in award for word in ["actor", "actress", "director", "demille"]):
+                for potential_award, people_name in people_names:
+                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS and token not in TWEET_STOP_WORDS])
+                    # print("AWARD={}, POTENTIAL_AWARD={}, RATIO={}, PEOPlE_NAME={}".format(award, filtered_potential_award, Levenshtein.ratio(award, filtered_potential_award), people_name))
+                    if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
+                        for gram in people_name:
+                            phrase = ' '.join(gram)
+                            phrase = phrase.lower()
+                            potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
+            else:
+                for potential_award, other_name in other_names:
+                    filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS and token not in TWEET_STOP_WORDS])
+                    # print("AWARD={}, POTENTIAL_AWARD={}, RATIO={}".format(award, filtered_potential_award, Levenshtein.ratio(award, filtered_potential_award)))
+                    if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
+                        for gram in other_name:
+                            phrase = ' '.join(gram)
+                            phrase = phrase.lower()
+                            potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
 
-    for award in potential_winners.keys():
-        print(award, potential_winners[award].most_common(10))
-    # for award in award_mappings.keys():
-    #     award_mappings[award] = potential_winners[award].most_common(10)
-    # return award_mappings
+    # print(potential_winners)
+    winners = {}
+    for award in clean_awards:
+        award_name = award_mappings[award]
+        print("AWARD={}, POTENTIAL_WINNERS={}".format(award_name, potential_winners[award].most_common(10)))
+        if len(potential_winners[award]) > 0:
+            winners[award_name] = potential_winners[award].most_common(1)[0][0]
+        else:
+            winners[award_name] = "Not found"
 
-get_winner('2013')
+    # print(winners)
+    return winners
+
+
+# get_winner('2013')
