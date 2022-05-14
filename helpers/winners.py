@@ -46,18 +46,29 @@ def get_winner(year):
         potential_winners[clean_award] = Counter()
 
     all_tweets = get_tweets(year)
-    # all_tweets = ["John Doe won the cecil b. demille award."]
+    # all_tweets = ["John Doe wins the cecil b. demille award.", "Argo wins the best motion picture in drama. Jennifer Lawrence wins the best actress performance in a motion picture drama."]
     for tweet in all_tweets:
         sentences = sent_tokenize(tweet)
         people_names = []
         other_names = []
         for sentence in sentences:
+            # print("NOW PARSING={}".format(sentence))
             # Start until key word
-            won_index = tweet.find(' won ')
+            won_index = sentence.find(' won ')
             if won_index != -1:
                 tokens = word_tokenize(sentence[:won_index])
                 people_names.append([sentence[won_index+5:], list(bigrams(tokens))])
                 other_names.append([sentence[won_index+5:], list(everygrams(tokens, max_len=3))])
+
+            
+            wins_index = sentence.find(' wins ')
+            if wins_index != -1:
+                tokens = word_tokenize(sentence[:wins_index])
+                people_names.append([sentence[wins_index+6:], list(bigrams(tokens))])
+                other_names.append([sentence[wins_index+6:], list(everygrams(tokens, max_len=3))])
+            
+            # print("PEOPLE NAMES: ", people_names)
+            # print("OTHER NAMES: ", other_names)
             
             # Start after key word
 
@@ -70,6 +81,7 @@ def get_winner(year):
                     if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
                         for gram in people_name:
                             phrase = ' '.join(gram)
+                            phrase = phrase.lower()
                             potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
             else:
                 for potential_award, other_name in other_names:
@@ -78,6 +90,7 @@ def get_winner(year):
                     if Levenshtein.ratio(award, filtered_potential_award) >= 0.6:
                         for gram in other_name:
                             phrase = ' '.join(gram)
+                            phrase = phrase.lower()
                             potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
 
     # print(potential_winners)
@@ -90,8 +103,8 @@ def get_winner(year):
         else:
             winners[award_name] = "Not found"
 
-    print(winners)
+    # print(winners)
     return winners
 
 
-get_winner('2013')
+# get_winner('2013')
