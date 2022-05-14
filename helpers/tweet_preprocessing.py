@@ -30,8 +30,10 @@ def get_tweets(year):
             tweet = clean(tweet)
             tweet_text_lst.append(tweet)
 
+    f = open('./processedtweets{}.txt'.format(year), 'w')
     for i, tweet in enumerate(tweet_text_lst):
         tweet_text_lst[i] = secondClean(tweet_text_lst[i])
+        f.write(tweet_text_lst[i] + '\n')
 
     return tweet_text_lst
 
@@ -111,5 +113,4 @@ def fixMentions(text):
 
 
 #UNCOMMENT ME FOR TESTING "python3 tweet_preprocessing.py > tweets2013.txt"
-for line in get_tweets(2013):
-     print(line)
+get_tweets(2013)
