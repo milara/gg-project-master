@@ -1,6 +1,7 @@
 import json
 import re
 from os.path import exists
+import unidecode
 
 '''
 PREPROCESSES TWEETS
@@ -18,7 +19,8 @@ def get_tweets(year):
     if exists('processedtweets{}.txt'.format(year)):
         return open('processedtweets{}.txt'.format(year)).readlines()
 
-    with open('../gg{}.json'.format(year)) as f:
+
+    with open('./gg{}.json'.format(year)) as f:
         tweet_information = json.load(f)
 
         tweet_text_lst = []
@@ -29,25 +31,35 @@ def get_tweets(year):
             tweet_text_lst.append(tweet)
 
     for i, tweet in enumerate(tweet_text_lst):
-        tweet_text_lst[i] = separateHashtags(tweet_text_lst[i])
-        tweet_text_lst[i] = fixMentions(tweet_text_lst[i])
-
-        ''' 
-        this next line surrounds every punctuation and other 'useless' character with spaces
-        this would let a dumber algorithm match names or other keywords better, and furthermore
-        i dont think we care about punctuation (doing this wouldn't affect anything, right?)
-
-        e.g. "Leo DiCaprio's" => "Leo DiCaprio ' s"
-        '''
-        tweet_text_lst[i] = re.sub('([^a-zA-Z0-9\s])', r' \1 ', tweet_text_lst[i]) 
-
-        tweet_text_lst[i] = re.sub('\s+', ' ', tweet_text_lst[i])
-        if re.match('\s+', tweet_text_lst[i]):
-            tweet_text_lst[i] = re.sub('\s+', '', tweet_text_lst[i], 1)
+        tweet_text_lst[i] = secondClean(tweet_text_lst[i])
 
     return tweet_text_lst
 
+def secondClean(text):
+    text = separateHashtags(text)
+    text = fixMentions(text)
+
+    ''' 
+    this next line surrounds every punctuation and other 'useless' character with spaces
+    this would let a dumber algorithm match names or other keywords better, and furthermore
+    i dont think we care about punctuation (doing this wouldn't affect anything, right?)
+
+    e.g. "Leo DiCaprio's" => "Leo DiCaprio ' s"
+    '''
+    text = re.sub('(\'s\s*)', ' \1', text) 
+    text = re.sub('([^a-zA-Z0-9\s])', '', text)
+     
+
+    text = re.sub('\s+', ' ', text)
+    if re.match('\s+', text):
+        text = re.sub('\s+', '', text, 1)
+
+    # text = re.sub('(?<=\((^|\s)[A-Z])\s+(?=([A-Z]($|\s)))*', '', text)
+    # '(\s|^)[A-Z]\s[A-Z](\s|$)'
+    return text
+
 def clean(text):
+    text = unidecode.unidecode(text)
     text = re.sub('&amp;', " and ", text)
     text = re.sub('(&gt;)+', ' are greater than ', text)
     text = re.sub('(&lt;3+)+', ' heartemote ', text)
