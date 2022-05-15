@@ -222,7 +222,7 @@ def main(years, grading):
     pprint(scores)
 
 if __name__ == '__main__':
-    years = ['2013']
+    years = ['2013', '2015']
     grading = ["winner"]
 
     if len(sys.argv) > 1:
