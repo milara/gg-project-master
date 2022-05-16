@@ -38,6 +38,19 @@ def get_filtered_awards(year):
 
     return clean_awards
 
+# Get all possible candidates for award
+# Includes both nominees and winner
+def get_candidates(year):
+    candidates = {}
+    with open('gg{}answers.json'.format(year), encoding='utf-8') as f:
+        data = json.load(f)
+    for award in data['award_data'].keys():
+        candidates[award] = []
+        candidates[award].extend(data["award_data"][award]["nominees"])
+        candidates[award].append(data["award_data"][award]["winner"])
+    return candidates
+
+
 def get_winner(year):
     award_mappings = get_filtered_awards(year)
     clean_awards = award_mappings.keys()
@@ -46,8 +59,16 @@ def get_winner(year):
     for clean_award in clean_awards:
         potential_winners[clean_award] = Counter()
 
+    candidates = get_candidates(year)
+    awards_to_candidates = {}
+    for clean_award in clean_awards:
+        awards_to_candidates[clean_award] = candidates[award_mappings[clean_award]]
+
+    # print("AWARDS TO CANDIDATES")
+    # print(awards_to_candidates)
+
     all_tweets = get_tweets(year)
-    # all_tweets = ["John Doe wins the cecil b. demille award.", "Argo wins the best motion picture in drama. Jennifer Lawrence wins the best actress performance in a motion picture drama."]
+    # all_tweets = ["Jodie Fostor wins the cecil b. demille award.", "Argo wins the best motion picture in drama. Jennifer Lawrence wins the best actress performance in a motion picture drama."]
     # all_tweets = ["John Doe wins the cecil b. demille award.", "John Doe wins the cecil b. demille award.", "Johnny Doe wins the cecil b. demille award."]
     for tweet in all_tweets:
         sentences = sent_tokenize(tweet)
@@ -84,7 +105,9 @@ def get_winner(year):
                         for gram in people_name:
                             phrase = ' '.join(gram)
                             phrase = phrase.lower()
-                            potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
+                            for candidate in awards_to_candidates[award]:
+                                if Levenshtein.ratio(candidate, phrase) >= 0.6:
+                                    potential_winners[award][candidate] = potential_winners[award].get(candidate, 0) + 1
             else:
                 for potential_award, other_name in other_names:
                     filtered_potential_award = ' '.join([token for token in word_tokenize(potential_award) if token not in AWARD_STOP_WORDS])
@@ -93,40 +116,21 @@ def get_winner(year):
                         for gram in other_name:
                             phrase = ' '.join(gram)
                             phrase = phrase.lower()
-                            potential_winners[award][phrase] = potential_winners[award].get(phrase, 0) + 1
+                            for candidate in awards_to_candidates[award]:
+                                if Levenshtein.ratio(candidate, phrase) >= 0.6:
+                                    potential_winners[award][candidate] = potential_winners[award].get(candidate, 0) + 1
 
     # print(potential_winners)
-    collapsed_potential_winners = {}
-    for clean_award in clean_awards:
-        collapsed_potential_winners[clean_award] = Counter()
-    
-    for award in clean_awards:
-        for potential_winner in potential_winners[award].keys():
-            # print("Potential winner: ", potential_winner)
-            added = False
-            
-            for collapsed_potential_winner in collapsed_potential_winners[award].keys():
-                # print("POTENTIAL WINNER={}, COLLAPSED={}".format(potential_winner, collapsed_potential_winner))
-                # print("CURRENT FREQ COUNT: ", collapsed_potential_winners[award][potential_winner])
-                if Levenshtein.ratio(collapsed_potential_winner, potential_winner) >= 0.8:
-                    # print("Ratio > 0.6")
-                    collapsed_potential_winners[award][collapsed_potential_winner] += 1
-                    added = True
-            
-            if not added:
-                collapsed_potential_winners[award][potential_winner] = potential_winners[award][potential_winner]
-                # print("Added: ", collapsed_potential_winners[award])
-    
     winners = {}
     for award in clean_awards:
         award_name = award_mappings[award]
         # print("AWARD NAME={}".format(award_name))
-        if len(collapsed_potential_winners[award]) > 0:
+        if len(potential_winners[award]) > 0:
             # print("Winner Candidates for AWARD={}, CHOSE={}".format(potential_winners[award].most_common(10), potential_winners[award].most_common(1)[0][0]))
-            # winners[award_name] = potential_winners[award].most_common(1)[0][0]
+            winners[award_name] = potential_winners[award].most_common(1)[0][0]
 
             # print("Winner Candidates for AWARD={}, CHOSE={}".format(collapsed_potential_winners[award].most_common(10), collapsed_potential_winners[award].most_common(1)[0][0]))
-            winners[award_name] = collapsed_potential_winners[award].most_common(1)[0][0]
+            # winners[award_name] = collapsed_potential_winners[award].most_common(1)[0][0]
         else:
             winners[award_name] = "Not found"
 
