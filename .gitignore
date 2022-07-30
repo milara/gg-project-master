@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+nlp_env/
+env/
+gg2013.json
+gg2015.json
+.DS_Store
